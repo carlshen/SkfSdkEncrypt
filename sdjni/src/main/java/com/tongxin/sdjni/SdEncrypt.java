@@ -27,42 +27,55 @@ public class SdEncrypt {
     }
 
     /**
-     * AES加密
-     *
-     * @param context
+     * set package name
      * @param str
-     * @return
-     */
-    public static native String encode(Object context, String str);
-
-
-    /**
-     * AES 解密
-     *
-     * @param context
-     * @param str
-     * @return UNSIGNATURE ： sign not pass .
-     */
-    public static native String decode(Object context, String str);
-
-
-    /**
-     * 检查 打包签名是否 是正确的 防止被二次打包
-     *
-     * @param context
      * @return 1 : pass ， -1 or  -2 : error.
      */
-    public static native int checkSignature(Object context);
-
-    public native String getver();
-    public native int inputkey(byte[] key, int offset, int length);
-    public native byte[] readkey(int offset, int length);
-    public native byte[] transmitdata(byte[] key, int keylen, int length);
-    public native int inputkey1(String file, String key, int offset, int length);
-    public native String readkey1(String file, int offset, int length);
-    public native String transmitdata1(String file, String key, int keylen, int length);
-    public native int inputkey2(String file, byte[]  key, int offset, int length);
-    public native byte[] readkey2(String file, int offset, int length);
-    public native byte[] transmitdata2(String file, byte[] key, int keylen, int length);
+    public static native long setPackageName(String str);
+    public static native String GetFuncList();
+    public static native long ImportCert(int handle, byte[] command);
+    public static native byte[] ExportCert(int handle);
+    public static native String EnumDev();
+    public static native int ConnectDev(String dev);
+    public static native long DisconnectDev(int handle);
+    // cipher management
+    public static native String GenRandom(int handle);
+    public static native byte[] GenECCKeyPair(int handle);
+    public static native long ImportECCKey(int handle, byte[]pubkey, byte[]prvkey);
+    public static native byte[] ECCSignData(int handle, byte[]data);
+    public static native long ECCVerify(int handle, byte[]sign, byte[]data);
+    public static native long ExtECCVerify(int handle);
+    public static native long GenDataWithECC(int handle);
+    public static native long GenKeyWithECC(int handle);
+    public static native long GenDataAndKeyWithECC(int handle);
+    public static native byte[] ExportPublicKey(int handle);
+    public static native long ImportSessionKey(int handle);
+    // cipher supplement service
+    public static native long SetSymKey(int handle, byte[] key);
+    public static native String GetSymKey(int handle);
+    public static native long CheckSymKey(int handle);
+    public static native long CloseHandle(int handle);
+    public static native String GetDevInfo(int handle);
+    public static native long GetZA(int handle, byte[] command);
+    public static native long EncryptInit(int handle);
+    public static native byte[] Encrypt(int handle, byte[] data);
+    public static native long EncryptUpdate(int handle);
+    public static native long EncryptFinal(int handle);
+    public static native long DecryptInit(int handle);
+    public static native long Decrypt(int handle);
+    public static native long DecryptUpdate(int handle);
+    public static native long DecryptFinal(int handle);
+    public static native long DigestInit(int handle);
+    public static native long Digest(int handle);
+    public static native long DigestUpdate(int handle);
+    public static native long DigestFinal(int handle);
+    public static native long MacInit(int handle);
+    public static native long MacUpdate(int handle);
+    public static native long MacFinal(int handle);
+    public static native long GenerateKey(int handle);
+    public static native long ECCExportSessionKey(int handle);
+    public static native long ECCPrvKeyDecrypt(int handle);
+    public static native long ImportKeyPair(int handle);
+    public static native long Cipher(int handle);
 
 }

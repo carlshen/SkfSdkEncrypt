@@ -5,7 +5,7 @@ set(distribution_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../distribution)
 
 add_library(lib_tongxin SHARED IMPORTED)
 set_target_properties(lib_tongxin PROPERTIES IMPORTED_LOCATION
-    ${distribution_DIR}/tongxin/lib/${ANDROID_ABI}/libsdcard.so)
+    ${distribution_DIR}/tongxin/lib/${ANDROID_ABI}/libskf.so)
 
 add_library( # Sets the name of the library.
              SDKey
@@ -13,16 +13,10 @@ add_library( # Sets the name of the library.
              SHARED
              # Provides a relative path to your source file(s).
              src/main/jni/JNIEncrypt.c
-             src/main/jni/checksignature.h
-             src/main/jni/checksignature.c
-             src/main/jni/check_emulator.h
-             src/main/jni/check_emulator.c
-             src/main/jni/debugger.h
-             src/main/jni/debugger.c
-             src/main/jni/aes.h
              src/main/jni/base64.h
-             src/main/jni/aes.c
              src/main/jni/base64.c
+             src/main/jni/APDUs.h
+             src/main/jni/APDUs.c
              )
 
 # 搜索指定的预构建库并将路径存储为变量。 因为默认情况下，CMake在搜索路径中包含系统库，
@@ -40,6 +34,6 @@ target_include_directories(SDKey PRIVATE source ${distribution_DIR}/tongxin/incl
 
 target_link_libraries( # Specifies the target library.
                        SDKey
-					   lib_tongxin
+                       lib_tongxin
                        # included in the NDK.
                        ${log-lib} )

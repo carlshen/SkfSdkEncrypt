@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">SDEncrypt</string>
+    <string name="sample_show_log">Show Log</string>
+    <string name="sample_hide_log">Hide Log</string>
+    <string name="hint_apdu">apdu</string>
+    <string name="btn_select_apdu">SelectApdu</string>
+    <string name="btn_command_apdu">CommandApdu</string>
+    <string name="btn_exist_device">SkfExist</string>
+    <string name="btn_enum_device">Enum Dev</string>
+    <string name="btn_connect_device">Connect</string>
+    <string name="btn_info_device">Dev Info</string>
+    <string name="btn_disconnect_device">Disconnect</string>
+    <string name="large_payload">DTU Orientation</string>
 </resources>

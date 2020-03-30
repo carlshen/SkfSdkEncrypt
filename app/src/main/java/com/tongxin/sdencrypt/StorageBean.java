@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Project： ZGBackup
+ * Project： Card Apdu
  * File: StorageBean.java
  */
 

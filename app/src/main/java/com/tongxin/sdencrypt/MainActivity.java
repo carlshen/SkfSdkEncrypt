@@ -1,6 +1,7 @@
 package com.tongxin.sdencrypt;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,63 +12,300 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.tongxin.sdjni.SdEncrypt;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
- * Created by carl on 19-11-12.
+ * Created by carl on 20-02-06.
  *
  * 用于公司的项目验证。
  */
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    public final String TAG = "tongxin";
-    private TextView text;
-    private TextView tvResult;
-    private boolean flag = true;
-    private String testFile = "TEST.txt";
-    private static int KEY_LENGTH = 2024;
-    private TextView textVersion;
+public class MainActivity extends AppCompatActivity {
+
+    public static final String TAG = "MainActivity";
+    private File appsDir;
     private String extPath;
-    private String extFile = null;
-    private EditText etKey = null;
-    private EditText etData = null;
-    private EditText etReadOff = null;
-    private EditText etReadLen = null;
-    private EditText etInputOff = null;
-    private EditText etgetLen = null;
+    private TextView tvResult = null;
+    private TextView tvLog = null;
+    // device management
+    private Button mEnumDev = null;
+    private Button mConnectDev = null;
+    private Button mDisconnectDev = null;
+    // container management
+    private Button mImportCert = null;
+    private Button mExportCert = null;
+    // device
+    private Button mSetAppPath = null;
+    private Button mGetFuncList = null;
+    // cipher management
+    private Button mGenRandom = null;
+    private Button mGenECCKeyPair = null;
+    private Button mImportECCKeyPair = null;
+    private Button mECCSignData = null;
+    private Button mECCVerify = null;
+    private Button mGenerateDataWithECC = null;
+    private Button mGenerateKeyWithECC = null;
+    private Button mGenerateDataAndKeyWithECC = null;
+    private Button mExportPublicKey = null;
+    private Button mImportSessionKey = null;
+    private Button mCloseHandle = null;
+    private Button mGetDevInfo = null;
+    private Button mGetZA = null;
+    private Button mNextPage = null;
+    private String mECCData = null;
+    private String ECCKeyPair = null;
+    private String deviceName = null;
+    private int deviceHandle = -1;
+    private String KeyData = null;
+    private String EncrpytData = null;
+    private String DecrpytData = null;
+    private String mEccSignedData = null;
+    private String ImportData = null;
+    private String ExportData = null;
+    private String RandomData = null;
+    private String PublicKey = null;
+    private String PrivateKey = null;
+    private String KeyHandle = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        View v = findViewById(R.id.get_version);
-        if (v != null)
-            v.setOnClickListener(this);
-        v = findViewById(R.id.input_key);
-        if (v != null)
-            v.setOnClickListener(this);
-        v = findViewById(R.id.read_key);
-        if (v != null)
-            v.setOnClickListener(this);
-        v = findViewById(R.id.write_data);
-        if (v != null)
-            v.setOnClickListener(this);
+        tvResult = (TextView) findViewById(R.id.tv_result);
+        tvLog = (TextView) findViewById(R.id.tv_log);
+        mEnumDev = (Button) findViewById(R.id.btn_device);
+        mEnumDev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deviceName = SdEncrypt.EnumDev();
+                tvResult.setText("EnumDev: " + deviceName);
+            }
+        });
+        mConnectDev = (Button) findViewById(R.id.btn_connect);
+        mConnectDev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (TextUtils.isEmpty(deviceName)) {
+                    deviceName = StorageUtils.EXTERNAL_SDCARD;
+                }
+                deviceHandle = SdEncrypt.ConnectDev(deviceName);
+                tvResult.setText("ConnectDev: " + deviceHandle);
+            }
+        });
+        mDisconnectDev = (Button) findViewById(R.id.btn_disconnect);
+        mDisconnectDev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = SdEncrypt.DisconnectDev(deviceHandle);
+                tvResult.setText("DisconnectDev: " + result);
+            }
+        });
 
-        textVersion = (TextView) findViewById(R.id.tv_version);
-        text = (TextView) findViewById(R.id.status);
-        tvResult = (TextView) findViewById(R.id.result);
-        etKey = (EditText) findViewById(R.id.et_key);
-        etData = (EditText) findViewById(R.id.et_data);
-        etReadOff = (EditText) findViewById(R.id.et_read_off);
-        etReadLen = (EditText) findViewById(R.id.et_read_len);
-        etInputOff = (EditText) findViewById(R.id.et_key_off);
-        etgetLen = (EditText) findViewById(R.id.et_get_len);
+        mImportCert = (Button) findViewById(R.id.btn_importcert);
+        mImportCert.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ImportData = "308201fd308201a3a003020102020500c15b78e3300a06082a811ccf5501837530818f310b300906035504061302415531283026060355040a0c1f546865204c6567696f6e206f662074686520426f756e637920436173746c653112301006035504070c094d656c626f75726e653111300f06035504080c08566963746f726961312f302d06092a864886f70d0109011620666565646261636b2d63727970746f40626f756e6379636173746c652e6f7267301e170d3230303330393039353231325a170d3231303330393039353231325a303b3110300e06035504030c076265696a696e67310c300a060355040b0c03746d6331193017060355040a0c106170706c69636174696f6e20756e69743059301306072a8648ce3d020106082a811ccf5501822d03420004b2c5f9be02b7dab8d8312b0ac8fb30bbedc79bee51d19efd647d2dbbd6f5e9078ad7837eeddcec2718a691d3c6c0a5dad6c53976b23f39c131a3f37a6d20eb33a33f303d300c0603551d130101ff04023000301d0603551d0e04160414e6521695daeb2f90867d2bedc1c79ad26ca8ef7e300e0603551d0f0101ff040403020410300a06082a811ccf550183750348003045022067a4e516d63ed3070791bd44b4c4df373048ccdfa20693690874456c9914a3f9022100db4facae7435dd123bc5db20e7ca88aa33914fe2853ddc4a11d364d33eda4913";
+                long result = SdEncrypt.ImportCert(deviceHandle, EncryptUtil.HexStringToByteArray(ImportData));
+                tvResult.setText("ImportCert result: " + result);
+            }
+        });
+        mExportCert = (Button) findViewById(R.id.btn_exportcert);
+        mExportCert.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                byte[] result = SdEncrypt.ExportCert(deviceHandle);
+                if (result != null) {
+                    ExportData = EncryptUtil.ByteArrayToHexString(result);
+                    tvLog.setText("ExportCert result: " + ExportData);
+                    tvResult.setText("ExportCert result length: " + result.length);
+                } else {
+                    tvResult.setText("ExportCert result failed. ");
+                }
+            }
+        });
+        mSetAppPath = (Button) findViewById(R.id.btn_setpath);
+        mSetAppPath.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callTongfang();
+                tvResult.setText("setPackageName: ok.");
+            }
+        });
+        mGetFuncList = (Button) findViewById(R.id.btn_getfunc);
+        mGetFuncList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String result = SdEncrypt.GetFuncList();
+                tvLog.setText("GetFuncList: " + result);
+            }
+        });
+        mGenRandom = (Button) findViewById(R.id.btn_genrandom);
+        mGenRandom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                RandomData = SdEncrypt.GenRandom(deviceHandle);
+                tvResult.setText("GenRandom: " + RandomData);
+            }
+        });
+        mGenECCKeyPair = (Button) findViewById(R.id.btn_genecckey);
+        mGenECCKeyPair.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // need get the result
+                byte[] result = SdEncrypt.GenECCKeyPair(deviceHandle);
+                if (result != null) {
+                    ECCKeyPair = EncryptUtil.ByteArrayToHexString(result);
+                }
+                tvResult.setText("GenECCKeyPair: " + ECCKeyPair);
+            }
+        });
+        mImportECCKeyPair = (Button) findViewById(R.id.btn_importecckey);
+        mImportECCKeyPair.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                PublicKey = "b2c5f9be02b7dab8d8312b0ac8fb30bbedc79bee51d19efd647d2dbbd6f5e9078ad7837eeddcec2718a691d3c6c0a5dad6c53976b23f39c131a3f37a6d20eb33";
+//                PrivateKey = "b21255a97dcd3a6c1f657cf926db7c03309c1b9cdbe864f3040e06ead154c381";
+                PublicKey = "078a94425d8f991402af39cfa894dd26f76a05fd9fffc078f558119371b5058519301543a61a8536ba659d897a48fde531e9d0926cd01617b9a04d6003ad7417";
+                PrivateKey = "33c903d77414e33385b673bf1cd1593c272b57cfff9c5528153d1b685dfbdc3c";
+                long result = SdEncrypt.ImportECCKey(deviceHandle, EncryptUtil.HexStringToByteArray(PublicKey), EncryptUtil.HexStringToByteArray(PrivateKey));
+                tvResult.setText("ImportECCKey: " + result);
+            }
+        });
+        mECCSignData = (Button) findViewById(R.id.btn_eccsigndata);
+        mECCSignData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                StringBuilder encbuilder = new StringBuilder(1024);
+                for (int i = 0; i < 28; i++) {
+                    encbuilder.append("1122334455667788990011223344556677889900");
+                }
+                mECCData = encbuilder.toString();
+                byte[] result = SdEncrypt.ECCSignData(deviceHandle, EncryptUtil.HexStringToByteArray(mECCData));
+                if (result != null) {
+                    mEccSignedData = EncryptUtil.ByteArrayToHexString(result);
+                }
+                tvResult.setText("ECCSignData: " + mEccSignedData);
+            }
+        });
+        mECCVerify = (Button) findViewById(R.id.btn_eccverify);
+        mECCVerify.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = SdEncrypt.ECCVerify(deviceHandle, EncryptUtil.HexStringToByteArray(mEccSignedData), EncryptUtil.HexStringToByteArray(mECCData));
+                tvResult.setText("ECCVerify: " + result);
+            }
+        });
+        mGenerateDataWithECC = (Button) findViewById(R.id.btn_gendatawithecc);
+        mGenerateDataWithECC.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (TextUtils.isEmpty(DecrpytData)) {
+                    tvResult.setText("SKF_Decrypt: There is no decrypt data");
+                    return;
+                }
+                long result = SdEncrypt.GenDataWithECC(deviceHandle);
+                tvResult.setText("GenDataWithECC: just holder. " + result);
+            }
+        });
+        mGenerateKeyWithECC = (Button) findViewById(R.id.btn_genkeywithecc);
+        mGenerateKeyWithECC.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = SdEncrypt.GenKeyWithECC(deviceHandle);
+                tvResult.setText("GenKeyWithECC: just holder. " + result);
+            }
+        });
+        mGenerateDataAndKeyWithECC = (Button) findViewById(R.id.btn_gendatakeywithecc);
+        mGenerateDataAndKeyWithECC.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // need update data in c
+                long result = SdEncrypt.GenDataAndKeyWithECC(deviceHandle);
+                tvResult.setText("GenDataAndKeyWithECC: " + result);
+            }
+        });
+        mExportPublicKey = (Button) findViewById(R.id.btn_exportpublickey);
+        mExportPublicKey.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                byte[] result = SdEncrypt.ExportPublicKey(deviceHandle);
+                if (result != null) {
+                    PublicKey = EncryptUtil.ByteArrayToHexString(result);
+                }
+                tvResult.setText("ExportPublicKey: " + PublicKey);
+            }
+        });
+        mImportSessionKey = (Button) findViewById(R.id.btn_exportsessionkey);
+        mImportSessionKey.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                String symKey = "11c88ae04cec1ba554d03d5b5970333a83585826c2a985de5520d9e934389efb84b52d344fb21aa8ea38a4940c8332692b8d4da2393549212eafdc0f11ca5c9c2a9abb548ddab4a9aec43f1ffad694020771b007d1d0b3bf17915766f28e52e5500d103ac4422698d989a7affd0a62df";
+                KeyData = "11c88ae04cec1ba554d03d5b5970333a83585826c2a985de5520d9e934389efb84b52d344fb21aa8ea38a4940c8332692b8d4da2393549212eafdc0f11ca5c9c4a0d639572735fdda4041ff8a70423be9e1b4a6c99bfcac73492b9a5a23beb7f2dab084ebf802dd61f262e400ae8971b";
+                byte[] key = EncryptUtil.HexStringToByteArray(KeyData);
+                Log.i(TAG, "====== mImportSesKey = " + KeyData);
+                long result = SdEncrypt.ImportSessionKey(deviceHandle);
+                tvResult.setText("ImportSessionKey: " + result);
+            }
+        });
+        mCloseHandle = (Button) findViewById(R.id.btn_closehandle);
+        mCloseHandle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = SdEncrypt.CloseHandle(deviceHandle);
+                tvResult.setText("CloseHandle: " + result);
+            }
+        });
+        mGetDevInfo = (Button) findViewById(R.id.btn_getdevinfo);
+        mGetDevInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String result = SdEncrypt.GetDevInfo(deviceHandle);
+                tvResult.setText("GetDevInfo: " + result);
+            }
+        });
+        mGetZA = (Button) findViewById(R.id.btn_getza);
+        mGetZA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (TextUtils.isEmpty(KeyHandle)) {
+                    KeyHandle = "078a94425d8f991402af39cfa894dd26f76a05fd9fffc078f558119371b50585078a94425d8f991402af39cfa894dd26f76a05fd9fffc078f558119371b50585";
+                }
+//                boolean result = SkfInterface.getSkfInstance().SKF_GetZA(deviceName, EncryptUtil.HexStringToByteArray(KeyHandle));
+                long result = SdEncrypt.GetZA(deviceHandle, EncryptUtil.HexStringToByteArray(KeyHandle));
+                tvResult.setText("GetZA: " + result);
+            }
+        });
+        mNextPage = (Button) findViewById(R.id.btn_nextpage);
+        mNextPage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SyncActivity.class);
+                intent.putExtra(EncryptUtil.DEVICE_NAME, deviceName);
+                intent.putExtra(EncryptUtil.SYMKEY_HANDLE, KeyData);
+                intent.putExtra(EncryptUtil.KEY_HANDLE, KeyHandle);
+                startActivity(intent);
+            }
+        });
+
+        // need init
+        callTongfang();
+    }
+
+    private void callTongfang() {
+        appsDir = getExternalFilesDir(null);
+        Log.i(TAG, "=============appsDir: " + appsDir.toString());
+//        String appPath = "Android/data/" + getPackageName();
+        String appPath = getPackageName();
+        long result = SdEncrypt.setPackageName(appPath);
+        Log.i(TAG, "appPath: " + appPath);
+        Log.i(TAG, "setPackageName result: " + result);
     }
 
     @Override
@@ -85,13 +323,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.d("MainActivity", "bean.getTotalSize(): " + bean.getTotalSize());
             cardBuilder.append(bean.getPath() + "\n");
             if (!bean.getPath().toLowerCase().contains("emulated")) {
-                extPath = bean.getPath();
+//                extPath = bean.getPath();
                 StorageUtils.EXTERNAL_SDCARD = bean.getPath();
                 break;
             }
         }
-        extPath = StorageUtils.EXTERNAL_SDCARD;
-        text.setText("ExternalFilesDir: " + StorageUtils.EXTERNAL_SDCARD);
+        Log.i(TAG, "cardBuilder: " + cardBuilder.toString());
+        extPath = StorageUtils.EXTERNAL_SDCARD + "/Android/data/" + getPackageName();
+        Log.i(TAG, "extPath: " + extPath);
+        tvLog.setText("ExternalFilesDir: " + extPath);
     }
 
     @Override
@@ -104,156 +344,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
         }
-    }
-
-    @Override
-    public void onClick(View view) {
-        int id = view.getId();
-        switch (id) {
-            case R.id.get_version:
-                try {
-                    String result = SdEncrypt.getSdInstance().getver();
-                    textVersion.setText("GetVersion: " + result);
-                } catch (Exception arg1) {
-                    arg1.printStackTrace();
-                }
-                break;
-            case R.id.read_key:
-                int off = 0;
-                int len = 0;
-                try {
-                    off = Integer.parseInt(etReadOff.getText().toString().trim());
-                    len = Integer.parseInt(etReadLen.getText().toString().trim());
-                    if (off < 0) {
-                        off = 0;
-                    }
-                    if (len < 1) {
-                        text.setText("Input key should be longer than 0.");
-                        return;
-                    }
-                } catch (Exception arg2) {
-                    arg2.printStackTrace();
-                }
-                try {
-//                    byte[] result = SdEncrypt.getSdInstance().readkey2(StorageUtils.EXTERNAL_SDCARD + StorageUtils.EXTERNAL_PATH + "/Key.bin", off, len);
-                    byte[] result = SdEncrypt.getSdInstance().readkey(off, len);
-                    String src = toHexString(result);
-                    Log.d("MainActivity", "GetKey: " + src);
-                    text.setText("GetKey: " + src);
-                } catch (Exception arg5) {
-                    arg5.printStackTrace();
-                }
-                break;
-            case R.id.input_key:
-                String inKey = etKey.getText().toString().trim();
-                if (TextUtils.isEmpty(inKey)) {
-                    Toast.makeText(getApplicationContext(), "please input key", Toast.LENGTH_SHORT);
-                    text.setText("please input key.");
-                    return;
-                }
-                int inputOff = 0;
-                try {
-                    inputOff = Integer.parseInt(etInputOff.getText().toString().trim());
-                    if (inputOff < 0) {
-                        inputOff = 0;
-                    }
-                } catch (Exception arg3) {
-                    arg3.printStackTrace();
-                }
-                try {
-                    byte[] src = toByteArray(inKey);
-                    Log.d("MainActivity", "inputOff: " + inputOff);
-                    Log.d("MainActivity", "src.length(): " + src.length);
-                    Log.d("MainActivity", "src: " + toHexString(src));
-                    int result = SdEncrypt.getSdInstance().inputkey(src, inputOff, src.length);
-//                    int result = SdEncrypt.getSdInstance().inputkey2(StorageUtils.EXTERNAL_SDCARD + StorageUtils.EXTERNAL_PATH + "/Key.bin", src, inputOff, src.length);
-                    text.setText("inputkey result: " + result);
-                } catch (Exception arg3) {
-                    arg3.printStackTrace();
-                }
-                break;
-            case R.id.write_data:
-                String inData= etData.getText().toString().trim();
-                if (TextUtils.isEmpty(inData)) {
-                    Toast.makeText(getApplicationContext(), "please input data", Toast.LENGTH_SHORT);
-                    text.setText("please input data to transmit.");
-                    return;
-                }
-                int getLen = 0;
-                try {
-                    getLen = Integer.parseInt(etgetLen.getText().toString().trim());
-                    if (getLen < 0) {
-                        getLen = 0;
-                    }
-                } catch (Exception arg8) {
-                    arg8.printStackTrace();
-                }
-                try {
-                    byte[] src = toByteArray(inData);
-                    Log.d("MainActivity", "src.length(): " + src.length);
-                    Log.d("MainActivity", "src: " + toHexString(src));
-                    byte[] result = SdEncrypt.getSdInstance().transmitdata(src, src.length, getLen);
-//                    byte[] result = SdEncrypt.getSdInstance().transmitdata2(StorageUtils.EXTERNAL_SDCARD + StorageUtils.EXTERNAL_PATH + "/Security.bin", src, src.length, getLen);
-                    String dst = toHexString(result);
-                    text.setText("receive result: " + dst);
-                    Log.d("MainActivity", "  === result: " + dst);
-
-                    // next is the transmit data1 method
-//                    String trData1 = SdEncrypt.getSdInstance().transmitdata1(StorageUtils.EXTERNAL_SDCARD + StorageUtils.EXTERNAL_PATH + "/Security.bin", inData, inData.length(), getLen);
-//                    Log.d("MainActivity", "  === result: " + trData1);
-//                    text.setText("receive result: " + trData1);
-                } catch (Exception arg9) {
-                    arg9.printStackTrace();
-                }
-                break;
-        }
-    }
-
-    void writeFileTest() {
-        Log.d("MainActivity", "writeFileTest() getSuggestStoragePath = " + StorageUtils.getSuggestStoragePath(getApplicationContext()));
-        if (flag) {
-            flag = false;
-            boolean result = StorageUtils.writeString(extPath, testFile, "" + System.currentTimeMillis());
-            Log.d("MainActivity", "writeString result = "  + result);
-            text.setText("Write file result: " + result);
-            flag = true;
-        }
-    }
-
-    void writeNewFileTest() {
-        Log.d("MainActivity", "writeNewFileTest() getSuggestStoragePath = " + StorageUtils.getSuggestStoragePath(getApplicationContext()));
-        if (flag) {
-            flag = false;
-            extFile = System.currentTimeMillis() + ".txt";
-            boolean result = StorageUtils.writeString(extPath, extFile, "" + System.currentTimeMillis());
-            Log.d("MainActivity", "writeNewFileTest result = "  + result);
-            text.setText("Write new file result: " + result);
-            flag = true;
-        }
-    }
-
-    public String toHexString(byte[] byteArray) {
-        String str = null;
-        if (byteArray != null && byteArray.length > 0) {
-            StringBuffer stringBuffer = new StringBuffer(byteArray.length);
-            for (byte byteChar : byteArray) {
-                stringBuffer.append(String.format("%02X", byteChar));
-            }
-            str = stringBuffer.toString();
-        }
-        return str;
-    }
-    public byte[] toByteArray(String hexString) {
-        hexString = hexString.toLowerCase();
-        final byte[] byteArray = new byte[hexString.length() / 2];
-        int k = 0;
-        for (int i = 0; i < byteArray.length; i++) {// 因为是16进制，最多只会占用4位，转换成字节需要两个16进制的字符，高位在先
-            byte high = (byte) (Character.digit(hexString.charAt(k), 16) & 0xff);
-            byte low = (byte) (Character.digit(hexString.charAt(k + 1), 16) & 0xff);
-            byteArray[i] = (byte) (high << 4 | low);
-            k += 2;
-        }
-        return byteArray;
     }
 
 }
